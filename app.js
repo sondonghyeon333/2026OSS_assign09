@@ -217,6 +217,18 @@ async function loadGames() {
     statusMessage.textContent = "조회 실패: " + error.message;
   }
 }
+//  게임 제목 검색
+function searchGames() {
+  const word = search.value.trim().toLowerCase();
 
+  const results = games.filter(function(game) {
+    return game.title.toLowerCase().includes(word);
+  });
+
+  renderGames(results);
+}
+
+// 검색창에 입력할 때마다 실행
+search.addEventListener("input", searchGames);
 // 페이지 시작 시 자동 조회
 loadGames();
