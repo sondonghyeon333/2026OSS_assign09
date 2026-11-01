@@ -137,10 +137,10 @@ function startEdit(id) {
   statusMessage.textContent = "수정할 내용을 입력하세요.";
 }
 
-// PATCH: 게임 수정
+// PUT: 게임 수정
 async function updateGame(id, game) {
   const response = await fetch(API_URL + "/" + id, {
-    method: "PATCH",
+    method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(game)
   });
