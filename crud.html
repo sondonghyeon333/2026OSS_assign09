@@ -1,9 +1,49 @@
-<form id="gameForm">
-  <input id="title" placeholder="게임 제목" required>
-  <input id="genre" placeholder="장르" required>
-  <input id="platform" placeholder="플랫폼" required>
-  <input id="price" type="number" min="0" required>
-  <input id="rating" type="number"
-         min="0" max="5" step="0.1" required>
-  <button id="saveButton">게임 추가</button>
-</form>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게임 관리</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <h1>게임 관리 서비스</h1>
+    <a href="index.html">홈으로</a>
+
+    <h2>게임 등록</h2>
+
+    <form id="gameForm">
+        <input id="title" placeholder="게임 제목" required>
+        <input id="genre" placeholder="장르" required>
+        <input id="platform" placeholder="플랫폼" required>
+        <input id="price" type="number" min="0"
+               placeholder="가격" required>
+        <input id="rating" type="number" min="0" max="5"
+               step="0.1" placeholder="평점" required>
+
+        <button id="saveButton" type="submit">게임 추가</button>
+    </form>
+
+    <h2>게임 목록</h2>
+
+    <input id="search" placeholder="게임 제목 검색">
+
+    <p id="status"></p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>제목</th>
+                <th>장르</th>
+                <th>플랫폼</th>
+                <th>가격</th>
+                <th>평점</th>
+                <th>관리</th>
+            </tr>
+        </thead>
+        <tbody id="gameList"></tbody>
+    </table>
+
+</body>
+</html>
