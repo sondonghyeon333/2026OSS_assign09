@@ -1,4 +1,3 @@
-
 const API_URL = "https://6ae2c6fcbbb54129229a63f1.mockapi.io/games";
 const form = document.querySelector("#gameForm");
 const list = document.querySelector("#gameList");
@@ -7,7 +6,7 @@ const saveButton = document.querySelector("#saveButton");
 const search = document.querySelector("#search");
 
 let games = [];
-let editingId = null; // Commit 8: 수정 중인 게임 ID
+let editingId = null;
 
 // 목록 출력
 function renderGames(items) {
@@ -22,8 +21,9 @@ function renderGames(items) {
       tr.appendChild(td);
     });
 
-    // Commit 8: 수정 버튼 추가
     const td = document.createElement("td");
+
+    // 수정 버튼
     const editButton = document.createElement("button");
     editButton.textContent = "수정";
     editButton.type = "button";
@@ -33,11 +33,24 @@ function renderGames(items) {
     });
 
     td.appendChild(editButton);
+
+    // Commit 9: 삭제 버튼 추가
+    const deleteButton = document.createElement("button");
+    deleteButton.textContent = "삭제";
+    deleteButton.type = "button";
+
+    deleteButton.addEventListener("click", function() {
+      deleteGame(game.id);
+    });
+
+    td.appendChild(deleteButton);
+
     tr.appendChild(td);
     list.appendChild(tr);
   });
 }
 
+// 폼 입력값 읽기
 function readForm() {
   return {
     title: document.querySelector("#title").value.trim(),
@@ -48,7 +61,7 @@ function readForm() {
   };
 }
 
-// 오류 처리
+// 입력값 검증
 function validateGame(game) {
   if (!form.checkValidity()) {
     form.reportValidity();
@@ -78,7 +91,7 @@ function validateGame(game) {
   return true;
 }
 
-// 게임 추가
+// POST: 게임 추가
 async function addGame(game) {
   const response = await fetch(API_URL, {
     method: "POST",
@@ -86,11 +99,14 @@ async function addGame(game) {
     body: JSON.stringify(game)
   });
 
-  if (!response.ok) throw new Error("HTTP " + response.status);
+  if (!response.ok) {
+    throw new Error("HTTP " + response.status);
+  }
+
   await loadGames();
 }
 
-// Commit 8: 수정할 게임 정보 불러오기
+// 수정할 게임 정보 불러오기
 function startEdit(id) {
   const game = games.find(function(item) {
     return item.id === id;
@@ -110,7 +126,7 @@ function startEdit(id) {
   statusMessage.textContent = "수정할 내용을 입력하세요.";
 }
 
-// PATCH 게임 수정
+// PATCH: 게임 수정
 async function updateGame(id, game) {
   const response = await fetch(API_URL + "/" + id, {
     method: "PATCH",
@@ -118,16 +134,54 @@ async function updateGame(id, game) {
     body: JSON.stringify(game)
   });
 
-  if (!response.ok) throw new Error("HTTP " + response.status);
+  if (!response.ok) {
+    throw new Error("HTTP " + response.status);
+  }
+
   await loadGames();
 }
 
-// 게임 추가와 수정 구분
+// DELETE : 게임 삭제
+async function deleteGame(id) {
+  // 삭제하기 전 확인
+  if (!confirm("정말 이 게임을 삭제하시겠습니까?")) {
+    return;
+  }
+
+  try {
+    const response = await fetch(API_URL + "/" + id, {
+      method: "DELETE"
+    });
+
+    if (!response.ok) {
+      throw new Error("HTTP " + response.status);
+    }
+
+    // 삭제한 게임이 수정 중이었다면 폼 초기화
+    if (editingId === id) {
+      form.reset();
+      editingId = null;
+      saveButton.textContent = "게임 추가";
+    }
+
+    // 삭제 후 목록 갱신
+    await loadGames();
+    statusMessage.textContent = "게임 삭제 완료";
+
+  } catch (error) {
+    statusMessage.textContent = "삭제 실패: " + error.message;
+  }
+}
+
+// 게임 추가 또는 수정
 form.addEventListener("submit", async function(event) {
   event.preventDefault();
 
   const game = readForm();
-  if (!validateGame(game)) return;
+
+  if (!validateGame(game)) {
+    return;
+  }
 
   try {
     if (editingId === null) {
@@ -146,12 +200,14 @@ form.addEventListener("submit", async function(event) {
   }
 });
 
-// GET 조회
+// GET: 게임 목록 조회
 async function loadGames() {
   try {
     const response = await fetch(API_URL);
 
-    if (!response.ok) throw new Error("HTTP " + response.status);
+    if (!response.ok) {
+      throw new Error("HTTP " + response.status);
+    }
 
     games = await response.json();
     renderGames(games);
@@ -162,4 +218,5 @@ async function loadGames() {
   }
 }
 
+// 페이지 시작 시 자동 조회
 loadGames();
