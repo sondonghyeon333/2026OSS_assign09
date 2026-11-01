@@ -29,6 +29,20 @@ function readForm() {
     rating: Number(document.querySelector("#rating").value)
   };
 }
+
+
+//오류 처리
+function validateGame(game) {
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return false;
+  }
+  if (game.title.length < 2) { status.textContent = "제목은 2글자 이상 입력하세요."; return false; }
+  if (game.genre.length === 0 || game.platform.length === 0) { status.textContent = "장르와 플랫폼을 입력하세요."; return false; }
+  if (game.price < 0 || !Number.isFinite(game.price)) { status.textContent = "가격은 0 이상이어야 합니다."; return false; }
+  if (game.rating < 0 || game.rating > 5 || !Number.isFinite(game.rating)) { status.textContent = "평점은 0~5 사이여야 합니다."; return false; }
+  return true;
+}
 //게임 추가
 async function addGame(game) {
   const response = await fetch(API_URL, {
