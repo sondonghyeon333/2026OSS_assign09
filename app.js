@@ -1,3 +1,4 @@
+
 const API_URL = "https://6ae2c6fcbbb54129229a63f1.mockapi.io/games";
 const form = document.querySelector("#gameForm");
 const list = document.querySelector("#gameList");
@@ -7,6 +8,10 @@ const search = document.querySelector("#search");
 
 let games = [];
 let editingId = null;
+
+// 요청 중인지 확인
+let isSaving = false;
+let isDeleting = false;
 
 // 목록 출력
 function renderGames(items) {
@@ -34,7 +39,7 @@ function renderGames(items) {
 
     td.appendChild(editButton);
 
-    // Commit 9: 삭제 버튼 추가
+    // 삭제 버튼
     const deleteButton = document.createElement("button");
     deleteButton.textContent = "삭제";
     deleteButton.type = "button";
@@ -44,6 +49,10 @@ function renderGames(items) {
     });
 
     td.appendChild(deleteButton);
+
+    // 요청 중에는 수정/삭제 버튼 비활성화
+    editButton.disabled = isSaving || isDeleting;
+    deleteButton.disabled = isSaving || isDeleting;
 
     tr.appendChild(td);
     list.appendChild(tr);
@@ -108,6 +117,8 @@ async function addGame(game) {
 
 // 수정할 게임 정보 불러오기
 function startEdit(id) {
+  if (isSaving || isDeleting) return;
+
   const game = games.find(function(item) {
     return item.id === id;
   });
@@ -141,12 +152,18 @@ async function updateGame(id, game) {
   await loadGames();
 }
 
-// DELETE : 게임 삭제
+// DELETE: 게임 삭제
 async function deleteGame(id) {
-  // 삭제하기 전 확인
+  if (isSaving || isDeleting) return;
+
   if (!confirm("정말 이 게임을 삭제하시겠습니까?")) {
     return;
   }
+
+  // 삭제 요청 시작
+  isDeleting = true;
+  saveButton.disabled = true;
+  searchGames();
 
   try {
     const response = await fetch(API_URL + "/" + id, {
@@ -157,19 +174,23 @@ async function deleteGame(id) {
       throw new Error("HTTP " + response.status);
     }
 
-    // 삭제한 게임이 수정 중이었다면 폼 초기화
     if (editingId === id) {
       form.reset();
       editingId = null;
       saveButton.textContent = "게임 추가";
     }
 
-    // 삭제 후 목록 갱신
     await loadGames();
     statusMessage.textContent = "게임 삭제 완료";
 
   } catch (error) {
     statusMessage.textContent = "삭제 실패: " + error.message;
+
+  } finally {
+    // 요청 종료 후 버튼 복구
+    isDeleting = false;
+    saveButton.disabled = false;
+    searchGames();
   }
 }
 
@@ -177,11 +198,19 @@ async function deleteGame(id) {
 form.addEventListener("submit", async function(event) {
   event.preventDefault();
 
+  // 중복 요청 방지
+  if (isSaving || isDeleting) return;
+
   const game = readForm();
 
   if (!validateGame(game)) {
     return;
   }
+
+  // 저장 중 버튼 비활성화
+  isSaving = true;
+  saveButton.disabled = true;
+  searchGames();
 
   try {
     if (editingId === null) {
@@ -197,6 +226,12 @@ form.addEventListener("submit", async function(event) {
 
   } catch (error) {
     statusMessage.textContent = "저장 실패: " + error.message;
+
+  } finally {
+    // 저장이 끝나면 버튼 복구
+    isSaving = false;
+    saveButton.disabled = false;
+    searchGames();
   }
 });
 
@@ -210,14 +245,17 @@ async function loadGames() {
     }
 
     games = await response.json();
-    renderGames(games);
+    searchGames();
+
     statusMessage.textContent = games.length + "개 게임 조회 완료";
 
   } catch (error) {
     statusMessage.textContent = "조회 실패: " + error.message;
+    throw error;
   }
 }
-//  게임 제목 검색
+
+// 게임 제목 검색
 function searchGames() {
   const word = search.value.trim().toLowerCase();
 
@@ -228,7 +266,9 @@ function searchGames() {
   renderGames(results);
 }
 
-// 검색창에 입력할 때마다 실행
 search.addEventListener("input", searchGames);
-// 페이지 시작 시 자동 조회
-loadGames();
+
+// 시작 시 조회 실패도 처리
+loadGames().catch(function(error) {
+  console.error(error);
+});
