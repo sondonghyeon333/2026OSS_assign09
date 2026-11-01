@@ -19,6 +19,38 @@ function renderGames(items) {
     list.appendChild(tr);
   });
 }
+
+function readForm() {
+  return {
+    title: document.querySelector("#title").value.trim(),
+    genre: document.querySelector("#genre").value.trim(),
+    platform: document.querySelector("#platform").value.trim(),
+    price: Number(document.querySelector("#price").value),
+    rating: Number(document.querySelector("#rating").value)
+  };
+}
+//게임 추가
+async function addGame(game) {
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(game)
+  });
+  if (!response.ok) throw new Error("HTTP " + response.status);
+  await loadGames();
+}
+
+form.addEventListener("submit", async function(event) {
+  event.preventDefault();
+  try {
+    await addGame(readForm());
+    form.reset();
+    status.textContent = "게임 등록 완료";
+  } catch (error) {
+    status.textContent = "등록 실패: " + error.message;
+  }
+});
+
 // Get 조회
 async function loadGames() {
   try {
